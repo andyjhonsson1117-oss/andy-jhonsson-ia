@@ -1,47 +1,52 @@
-from google import genai
 import streamlit as st
+import google.generativeai as genai
 
-# Configuración de página de ANDY JHONSSON
-st.set_page_config(
-    page_title="ANDY JHONSSON IA", page_icon="💈", layout="centered"
-    )
+# Configuración de la página
+st.set_page_config(page_title="ANDY JHONSSON IA", page_icon="💈", layout="centered")
 
-    st.title("💈 ANDY JHONSSON IA")
-    st.caption("Asistente Virtual Avanzado de Edwin")
+# Título y presentación
+st.title("💈 ANDY JHONSSON IA")
+st.write("¡Hola! Soy ANDY JHONSSON, tu asistente virtual. ¿En qué te puedo ayudar hoy?")
 
-    # Reemplaza con tu clave ANDY API Key 1117
-    API_KEY = "PEGA_AQUI_TU_API_KEY"
+# Inicializar las claves de API en el estado de la sesión
+if "api_key" not in st.session_state:
+    st.session_state.api_key = ""
 
-    client = genai.Client(api_key=API_KEY)
+    # Entrada para la API Key de Gemini
+    api_key_input = st.text_input("Ingresa tu Gemini API Key:", type="password", value=st.session_state.api_key)
 
-    # Memoria de la sesión actual
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    if api_key_input:
+        st.session_state.api_key = api_key_input
+            genai.configure(api_key=st.session_state.api_key)
 
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
+            # Historial de mensajes
+            if "messages" not in st.session_state:
+                st.session_state.messages = []
 
-                    if prompt := st.chat_input("Escribe tu mensaje a ANDY JHONSSON..."):
-                        st.chat_message("user").markdown(prompt)
-                            st.session_state.messages.append({"role": "user", "content": prompt})
+                # Mostrar el historial de conversación
+                for message in st.session_state.messages:
+                    with st.chat_message(message["role"]):
+                            st.markdown(message["content"])
 
-                                try:
-                                        response = client.models.generate_content(
-                                                    model="gemini-2.5-flash",
-                                                                config={
-                                                                                "system_instruction": "Tu nombre es ANDY JHONSSON. Eres una Inteligencia Artificial avanzada creada por Edwin. Tienes amplios conocimientos y respondes de forma directa, rápida y cordial."
-                                                                                            },
-                                                                                                        contents=prompt,
-                                                                                                                )
+                            # Entrada de texto del usuario
+                            if prompt := st.chat_input("Escribe tu mensaje aquí..."):
+                                if not st.session_state.api_key:
+                                        st.warning("Por favor, ingresa tu Gemini API Key para continuar.")
+                                            else:
+                                                    # Guardar mensaje del usuario
+                                                            st.session_state.messages.append({"role": "user", "content": prompt})
+                                                                    with st.chat_message("user"):
+                                                                                st.markdown(prompt)
 
-                                                                                                                        with st.chat_message("assistant"):
-                                                                                                                                    st.markdown(response.text)
-                                                                                                                                            st.session_state.messages.append(
-                                                                                                                                                        {"role": "assistant", "content": response.text}
-                                                                                                                                                                )
-                                                                                                                                                                    except Exception as e:
-                                                                                                                                                                            st.error(
-                                                                                                                                                                                        f"Error al conectar con la IA. Revisa tu API Key. Detalle: {e}"
-                                                                                                                                                                                                )
+                                                                                        # Generar respuesta de la IA
+                                                                                                try:
+                                                                                                            model = genai.GenerativeModel("gemini-1.5-flash")
+                                                                                                                        response = model.generate_content(prompt)
                                                                                                                                     
+                                                                                                                                                with st.chat_message("assistant"):
+                                                                                                                                                                st.markdown(response.text)
+                                                                                                                                                                            
+                                                                                                                                                                                        st.session_state.messages.append({"role": "assistant", "content": response.text})
+                                                                                                                                                                                                except Exception as e:
+                                                                                                                                                                                                            st.error(f"Error al generar la respuesta: {e}")
+                                                                                                                                                                
